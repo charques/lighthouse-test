@@ -29,6 +29,7 @@ const processLighthouseResults = (report) => {
   const networkRTT = report.audits['network-rtt'].displayValue;
   const timeToInteractive = report.audits['interactive'].displayValue;
   const speedIndex = report.audits['speed-index'].displayValue;
+  const performanceScore = report.categories.performance.score * 100;
   
   return {resourceSize,
     firstContentfulPaint,
@@ -36,7 +37,8 @@ const processLighthouseResults = (report) => {
     largestContentfulPaint,
     networkRTT,
     timeToInteractive,
-    speedIndex};
+    speedIndex,
+    performanceScore};
 };
 
 const flags = {
@@ -61,6 +63,8 @@ let config = {
     throttlingMethod: "simulate"
   },
 };
+
+//,disableStorageReset: false
 
 let args = process.argv.slice(2);
 var argvs = yargs(args)
@@ -101,5 +105,16 @@ console.log("url: " + url + " -- numberOfTests: " + numberOfTests);
   }
   
   const median = computeMedianRun(resultsArray);
-  console.log(processLighthouseResults(median));
+  const processedResults = processLighthouseResults(median);
+
+  const date = (new Date()).toLocaleString().replace(/:/g, "_").replace(/\//g, "_");
+  fs.writeFile(
+    `${dirName}/summary-${date}.json`,
+    JSON.stringify(processedResults, null, ' '),
+    err => {
+      if (err) throw err;
+    }
+  );
+  
+  console.log(processedResults);
 }());

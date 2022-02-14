@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js --numberOfTests=5 --url=https://www.google.com/"
+    "start": "node index.js --numberOfTests=2 --url=https://www.google.com/"
   },
   "author": "",
   "license": "ISC",
