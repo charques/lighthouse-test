@@ -105,9 +105,11 @@ console.log("url: " + url + " -- numberOfTests: " + numberOfTests);
   }
   
   const median = computeMedianRun(resultsArray);
-  const processedResults = processLighthouseResults(median);
-
   const date = (new Date()).toLocaleString().replace(/:/g, "_").replace(/\//g, "_");
+  const processedResults = processLighthouseResults(median);
+  processedResults.date = date;
+  processedResults.testPlan = "url: " + url + " -- numberOfTests: " + numberOfTests;
+
   fs.writeFile(
     `${dirName}/summary-${date}.json`,
     JSON.stringify(processedResults, null, ' '),
