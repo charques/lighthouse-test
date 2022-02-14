@@ -1,18 +1,9 @@
 const fs = require('fs');
 const yargs = require('yargs/yargs');
+const puppeteer = require('puppeteer');
 const lighthouse = require('lighthouse');
-const chromeLauncher = require('chrome-launcher');
 const {computeMedianRun} = require('lighthouse/lighthouse-core/lib/median-run.js');
-
-const REPORTS_LOCATION = "reports"
-
-function launchChromeAndRunLighthouse(url, chromeFlags = {}, lighthouseFlags = {}, lighthouseConfig = null) {
-  return chromeLauncher.launch(chromeFlags).then(chrome => {
-    lighthouseFlags.port = chrome.port;
-    return lighthouse(url, lighthouseFlags, lighthouseConfig).then(results =>
-      chrome.kill().then(() => results));
-  });
-}
+const REPORTS_LOCATION = "reports";
 
 const processLighthouseResults = (report) => {
   const resourceSize = {};
@@ -31,42 +22,70 @@ const processLighthouseResults = (report) => {
   const speedIndex = report.audits['speed-index'].displayValue;
   const performanceScore = report.categories.performance.score * 100;
   
-  return {resourceSize,
+  return {
+    resourceSize,
     firstContentfulPaint,
     firstMeaningfulPaint,
     largestContentfulPaint,
     networkRTT,
     timeToInteractive,
     speedIndex,
-    performanceScore};
+    performanceScore
+  };
 };
 
-const chromeFlags = {
-  //chromeFlags: ['--headless', '--no-sandbox']
+const urlPatterns = [
+  '*'
+]
+
+async function intercept(page, patterns) {
+  const client = await page.target().createCDPSession();
+
+  await client.send("Fetch.enable", {
+    patterns: patterns.map(pattern => ({
+      urlPattern: pattern, resourceType: 'Image', interceptionStage: 'HeadersReceived'
+    }))
+  });
+
+  client.on("Fetch.requestPaused", async event => {
+    const { requestId } = event;
+    //console.log(`Request "${requestId}" paused.`);
+
+    const regex = new RegExp(/index-page-jumbotron-img.png*/);
+    if(regex.test(event.request.url)) {
+      const errorReason = "Failed";
+      await client.send("Fetch.failRequest", { requestId, errorReason });
+    }
+    else {
+      await client.send("Fetch.continueRequest", { requestId });
+    }
+  });
+
+}
+
+async function lighthouseFromPuppeteer(url, browserOptions) {
+  // Use Puppeteer to launch headful Chrome and don't use its default 800x600 viewport.
+  const browser = await puppeteer.launch(browserOptions);
+
+  browser.on('targetcreated', async (target) => {
+    const page = await target.page();
+    if(page) {
+      intercept(page, urlPatterns);
+    }
+  });
+
+  // Lighthouse will open the URL.
+  const result = await lighthouse(url, {
+    port: (new URL(browser.wsEndpoint())).port,
+    output: 'json',
+    //logLevel: 'info',
+  });
+
+  await browser.close();
+  return result;
 };
 
-const ligthhouseFlags = {
-  chromeFlags: ['--headless', '--no-sandbox'],
-  onlyCategories: ['performance']
-};
-
-const lighthouseConfig = {
-  extends: 'lighthouse:default',
-  settings: {
-    maxWaitForFcp: 30000,
-    maxWaitForLoad: 45000,
-    formFactor: "mobile",
-    throttling: {
-      rttMs: 150,
-      throughputKbps: 1638.4,
-      requestLatencyMs: 562.5,
-      downloadThroughputKbps: 1474.5600000000002,
-      uploadThroughputKbps: 675,
-      cpuSlowdownMultiplier: 4,
-    },
-    throttlingMethod: "simulate"
-  },
-};
+// -----------------------------------------------------
 
 let args = process.argv.slice(2);
 var argvs = yargs(args)
@@ -90,11 +109,18 @@ if (!fs.existsSync(dirName)) {
   fs.mkdirSync(dirName);
 }
 
-console.log("url: " + url + " -- numberOfTests: " + numberOfTests);
+const BROWSER_OPTIONS = {
+  headless: true, 
+  defaultViewport: null,
+  devtools: true,
+  args: ['--window-size=1920,1170','--window-position=0,0']
+};
 
+console.log("url: " + url + " -- numberOfTests: " + numberOfTests);
 (async function tests() {
-  for(let i =1;i <= numberOfTests; i++) {
-    let results = await launchChromeAndRunLighthouse(url, ligthhouseFlags, lighthouseConfig);
+
+  for(let i = 1;i <= numberOfTests; i++) {
+    let results = await lighthouseFromPuppeteer(url, BROWSER_OPTIONS);
     resultsArray.push(results.lhr);
 
     console.log("test " + i + " - completed");
@@ -106,7 +132,7 @@ console.log("url: " + url + " -- numberOfTests: " + numberOfTests);
       }
     );
   }
-  
+
   const median = computeMedianRun(resultsArray);
   const date = (new Date()).toLocaleString().replace(/:/g, "_").replace(/\//g, "_");
   const processedResults = processLighthouseResults(median);
@@ -120,6 +146,6 @@ console.log("url: " + url + " -- numberOfTests: " + numberOfTests);
       if (err) throw err;
     }
   );
-  
+
   console.log(processedResults);
 }());

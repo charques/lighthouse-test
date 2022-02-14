@@ -4,13 +4,15 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js --numberOfTests=2 --url=https://www.google.com/"
+    "start": "node index.js --numberOfTests=2 --url=https://developer.ing.com",
+    "start2": "node index2.js --numberOfTests=2 --url=https://developer.ing.com"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "chrome-launcher": "^0.15.0",
     "lighthouse": "^9.3.1",
+    "puppeteer": "^13.3.2",
     "yargs": "^17.3.1"
   }
 }
