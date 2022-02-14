@@ -40,7 +40,7 @@ const processLighthouseResults = (report) => {
 };
 
 const flags = {
-  chromeFlags: ['--headless'],
+  chromeFlags: ['--headless',"--no-sandbox"],
   onlyCategories: ['performance']
 };
 
