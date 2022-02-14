@@ -1,0 +1,16 @@
+{
+  "name": "lighthouse-test",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js --numberOfTests=5 --url=https://www.google.com/"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "chrome-launcher": "^0.15.0",
+    "lighthouse": "^9.3.1",
+    "yargs": "^17.3.1"
+  }
+}
