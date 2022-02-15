@@ -1,0 +1,11 @@
+{
+  "url": "https://developer.ing.com",
+  "iterations": 3,
+    "browserOptions": {
+    "headless": true, 
+    "defaultViewport": null,
+    "devtools": true,
+    "args": ["--no-sandbox"]
+  },
+  "lighthouseConfigPreset": "lr-desktop"
+}

@@ -4,8 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js --numberOfTests=2 --url=https://developer.ing.com",
-    "start2": "node index2.js --numberOfTests=2 --url=https://developer.ing.com"
+    "start": "node index.js --testPlan=tp-developer-ing-com.json"
   },
   "author": "",
   "license": "ISC",
