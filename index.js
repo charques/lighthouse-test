@@ -30,6 +30,8 @@ reportUtils.createReportFolders(testPlanObj.url);
     reportUtils.saveIndividualLighthouseReport(testPlanObj, perfMetricsResult.lighthouseMetricsProcessed, perfMetricsResult.lighthouseMetricsBulk);
     reportUtils.saveIndividualTimingReport(testPlanObj, perfMetricsResult.timingMetricsProcessed);
   }
-  reportUtils.saveMedianLighthouseReport(testPlanObj, lighthouseIndividualResults, timingIndividualResults);
+  const lighthouseMedian = testRunner.computeMedianRunLighthouse(lighthouseIndividualResults);
+  const timingMedian = testRunner.computeMedianRunTiming(timingIndividualResults);
+  reportUtils.saveMedianReport(testPlanObj, lighthouseMedian, timingMedian);
   
 }());

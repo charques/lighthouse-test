@@ -1,11 +1,48 @@
 const puppeteer = require('puppeteer');
 const lighthouse = require('lighthouse');
+const {computeMedianRun} = require('lighthouse/lighthouse-core/lib/median-run.js');
 const lrDesktopConfig = require('lighthouse/lighthouse-core/config/lr-desktop-config');
 const lrMobileConfig = require('lighthouse/lighthouse-core/config/lr-mobile-config');
 
+const computeMedianRunLighthouse = (lighthouseResults) => {
+  return processLighthouseResults(computeMedianRun(lighthouseResults))
+}
+
+const computeMedianRunTiming = (timingResults) => {
+  const median = (values) => {
+    values.sort(function(a,b){
+      return a-b;
+    });
+    var half = Math.floor(values.length / 2);
+    
+    if (values.length % 2)
+      return values[half];
+    else
+      return (values[half - 1] + values[half]) / 2.0;
+  }
+
+  const getValuesByKey = (resultsArray, key) => {
+    const values = [];
+    for (var i = 0; i < resultsArray.length; i++) {
+      values.push(resultsArray[i][key]);
+    }
+    return values;
+  }
+
+  return {
+    dnsLookup: median(getValuesByKey(timingResults, 'dnsLookup')),
+    tcpConnect: median(getValuesByKey(timingResults, 'tcpConnect')),
+    request: median(getValuesByKey(timingResults, 'request')),
+    response: median(getValuesByKey(timingResults, 'response')),
+    domLoaded: median(getValuesByKey(timingResults, 'domLoaded')),
+    domInteractive: median(getValuesByKey(timingResults, 'domInteractive')),
+    pageLoad: median(getValuesByKey(timingResults, 'pageLoad')),
+    fullTime: median(getValuesByKey(timingResults, 'fullTime'))
+  }
+}
 
 const processLighthouseResults = (report) => {
-  let resourceSize = [];
+  let resourceSize = {};
   report.audits['resource-summary'].details.items
     .filter(({ transferSize }) => transferSize > 0)
     .forEach(({ resourceType, transferSize }) => {
@@ -89,4 +126,5 @@ async function gatherPerformanceTimingMetrics(page) {
 }
 
 exports.gatherPerfMetrics = gatherPerfMetrics;
-exports.processLighthouseResults = processLighthouseResults;
+exports.computeMedianRunTiming = computeMedianRunTiming;
+exports.computeMedianRunLighthouse = computeMedianRunLighthouse;

@@ -1,41 +1,5 @@
 const fs = require('fs');
-const testRunner = require('./test-runner');
-const {computeMedianRun} = require('lighthouse/lighthouse-core/lib/median-run.js');
-
 const REPORTS_LOCATION = "reports";
-
-const computeMedianRunTiming = (timingResults) => {
-  const median = (values) => {
-    values.sort(function(a,b){
-      return a-b;
-    });
-    var half = Math.floor(values.length / 2);
-    
-    if (values.length % 2)
-      return values[half];
-    else
-      return (values[half - 1] + values[half]) / 2.0;
-  }
-
-  const getValuesByKey = (resultsArray, key) => {
-    const values = [];
-    for (var i = 0; i < resultsArray.length; i++) {
-      values.push(resultsArray[i][key]);
-    }
-    return values;
-  }
-
-  return {
-    dnsLookup: median(getValuesByKey(timingResults, 'dnsLookup')),
-    tcpConnect: median(getValuesByKey(timingResults, 'tcpConnect')),
-    request: median(getValuesByKey(timingResults, 'request')),
-    response: median(getValuesByKey(timingResults, 'response')),
-    domLoaded: median(getValuesByKey(timingResults, 'domLoaded')),
-    domInteractive: median(getValuesByKey(timingResults, 'domInteractive')),
-    pageLoad: median(getValuesByKey(timingResults, 'pageLoad')),
-    fullTime: median(getValuesByKey(timingResults, 'fullTime'))
-  }
-}
 
 const getDirname = (url) => {
   const urlObj = new URL(url);
@@ -64,7 +28,7 @@ const saveIndividualTimingReport = (testPlan, processedMetrics) => {
 
   fs.writeFile(
     `${dirName}/timing-${processedMetrics.fetchTime.replace(/:/g, "_")}.json`,
-    JSON.stringify(processedMetrics),
+    JSON.stringify(processedMetrics, null, ' '),
     err => {
       if (err) throw err;
     }
@@ -86,20 +50,19 @@ const saveIndividualLighthouseReport = (testPlan, processedMetrics, bulkMetrics)
   );
 };
 
-const saveMedianLighthouseReport = (testPlan, lighthouseResultsArray, timmingResultsArray) => {
-  const lighthouseMedian = computeMedianRun(lighthouseResultsArray);
-  const timingMedian = computeMedianRunTiming(timmingResultsArray);
+const saveMedianReport = (testPlan, lighthouseResultsMedian, timmingResultsMedian) => {
   const date = (new Date()).toLocaleString().replace(/:/g, "_").replace(/\//g, "_");
   
-  const results = {};
-  results.lighthouseMedianResults = testRunner.processLighthouseResults(lighthouseMedian);
-  results.timingMediaResults = timingMedian;
-  results.date = date;
-  results.testPlan = testPlan;
+  const results = {
+    lighthouseResultsMedian,
+    timmingResultsMedian,
+    date,
+    testPlan
+  };
 
   const dirName = getDirname(testPlan.url);
   fs.writeFile(
-    `${dirName}/lighhouse-median-${date}.json`,
+    `${dirName}/median-${date}.json`,
     JSON.stringify(results, null, ' '),
     err => {
       if (err) throw err;
@@ -112,4 +75,4 @@ const saveMedianLighthouseReport = (testPlan, lighthouseResultsArray, timmingRes
 exports.createReportFolders = createReportFolders;
 exports.saveIndividualLighthouseReport = saveIndividualLighthouseReport;
 exports.saveIndividualTimingReport = saveIndividualTimingReport;
-exports.saveMedianLighthouseReport = saveMedianLighthouseReport;
+exports.saveMedianReport = saveMedianReport;
