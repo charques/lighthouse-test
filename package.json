@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js --testPlan=tp-developer-ing-com.json"
+    "start": "node index.js --testPlan=tp-google-com.json"
   },
   "author": "",
   "license": "ISC",

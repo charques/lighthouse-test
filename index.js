@@ -1,45 +1,35 @@
 const fs = require('fs');
 const yargs = require('yargs/yargs');
-const lighthouseRunner = require('./lighthouse-runner');
+const testRunner = require('./test-runner');
 const reportUtils = require('./report-util');
-
-// -----------------------------------------------------
 
 let args = process.argv.slice(2);
 var argvs = yargs(args)
-  .usage('Usage: node index.js --testPlan [str] --assetFilterRegEx [str]')
+  .usage('Usage: node index.js --testPlan [str]')
   .demandOption(['testPlan'])
   .argv;
 
-//"assetFilterRegEx": "index-page-jumbotron-img.png*",
-
 let testPlanFile = argvs.testPlan;
-let assetFilterRegEx = argvs.assetFilterRegEx;
-
 let testPlanRawdata = fs.readFileSync(testPlanFile);
 let testPlanObj = JSON.parse(testPlanRawdata);
-
 reportUtils.createReportFolders(testPlanObj.url);
 
-console.log("!!----------------------------------------------------------------------------------");
-console.log("- TestPlan: " + JSON.stringify(testPlanObj));
 (async function tests() {
-
-  let resultsArray = [];
+  console.log("!!----------------------------------------------------------------------------------");
+  console.log("Running lighthouse test plan: " + JSON.stringify(testPlanObj));
+  let lighthouseIndividualResults = [];
+  let timingIndividualResults = [];
   for(let i = 1;i <= testPlanObj.iterations; i++) {
-    let results = await lighthouseRunner.lighthouseFromPuppeteer(
+    let perfMetricsResult = await testRunner.gatherPerfMetrics(
       testPlanObj.url, 
       testPlanObj.browserOptions, 
-      testPlanObj.lighthouseConfigPreset, 
-      assetFilterRegEx);
-    resultsArray.push(results.lhr);
-
-    console.log("- Test " + i + " - Completed");
-    reportUtils.saveIndividualLighthouseReport(testPlanObj, results);
+      testPlanObj.lighthouseConfigPreset);
+    
+    lighthouseIndividualResults.push(perfMetricsResult.lighthouseMetricsBulk.lhr);
+    timingIndividualResults.push(perfMetricsResult.timingMetricsProcessed);
+    reportUtils.saveIndividualLighthouseReport(testPlanObj, perfMetricsResult.lighthouseMetricsProcessed, perfMetricsResult.lighthouseMetricsBulk);
+    reportUtils.saveIndividualTimingReport(testPlanObj, perfMetricsResult.timingMetricsProcessed);
   }
-  const processedResults = reportUtils.saveMedianLighthouseReport(testPlanObj, resultsArray);
-  console.log("- Test Summary")
-  console.log(JSON.stringify(processedResults, null, ' '));
-  console.log("!!----------------------------------------------------------------------------------");
-
+  reportUtils.saveMedianLighthouseReport(testPlanObj, lighthouseIndividualResults, timingIndividualResults);
+  
 }());

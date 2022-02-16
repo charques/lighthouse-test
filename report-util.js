@@ -1,7 +1,41 @@
 const fs = require('fs');
+const testRunner = require('./test-runner');
 const {computeMedianRun} = require('lighthouse/lighthouse-core/lib/median-run.js');
 
 const REPORTS_LOCATION = "reports";
+
+const computeMedianRunTiming = (timingResults) => {
+  const median = (values) => {
+    values.sort(function(a,b){
+      return a-b;
+    });
+    var half = Math.floor(values.length / 2);
+    
+    if (values.length % 2)
+      return values[half];
+    else
+      return (values[half - 1] + values[half]) / 2.0;
+  }
+
+  const getValuesByKey = (resultsArray, key) => {
+    const values = [];
+    for (var i = 0; i < resultsArray.length; i++) {
+      values.push(resultsArray[i][key]);
+    }
+    return values;
+  }
+
+  return {
+    dnsLookup: median(getValuesByKey(timingResults, 'dnsLookup')),
+    tcpConnect: median(getValuesByKey(timingResults, 'tcpConnect')),
+    request: median(getValuesByKey(timingResults, 'request')),
+    response: median(getValuesByKey(timingResults, 'response')),
+    domLoaded: median(getValuesByKey(timingResults, 'domLoaded')),
+    domInteractive: median(getValuesByKey(timingResults, 'domInteractive')),
+    pageLoad: median(getValuesByKey(timingResults, 'pageLoad')),
+    fullTime: median(getValuesByKey(timingResults, 'fullTime'))
+  }
+}
 
 const getDirname = (url) => {
   const urlObj = new URL(url);
@@ -22,69 +56,60 @@ const createReportFolders = (url) => {
   }
 }
 
-const processLighthouseResults = (report) => {
-  const resourceSize = {};
-
-  report.audits['resource-summary'].details.items
-    .filter(({ transferSize }) => transferSize > 0)
-    .forEach(({ resourceType, transferSize }) => {
-      resourceSize[resourceType] = transferSize;
-    });
-
-  const firstContentfulPaint = report.audits['first-contentful-paint'].displayValue;
-  const firstMeaningfulPaint = report.audits['first-meaningful-paint'].displayValue;
-  const largestContentfulPaint = report.audits['largest-contentful-paint'].displayValue;
-  const networkRTT = report.audits['network-rtt'].displayValue;
-  const timeToInteractive = report.audits['interactive'].displayValue;
-  const speedIndex = report.audits['speed-index'].displayValue;
-  const performanceScore = report.categories.performance.score * 100;
-  
-  return {
-    resourceSize,
-    firstContentfulPaint,
-    firstMeaningfulPaint,
-    largestContentfulPaint,
-    networkRTT,
-    timeToInteractive,
-    speedIndex,
-    performanceScore
-  };
-};
-
-const saveIndividualLighthouseReport = (testPlan, report) => {
+const saveIndividualTimingReport = (testPlan, processedMetrics) => {
   const dirName = getDirname(testPlan.url);
 
+  console.log(processedMetrics.fetchTime + " -> dnsLookup: " + processedMetrics.dnsLookup + " tcpConnect: " + processedMetrics.tcpConnect + " request: " + processedMetrics.request
+  + " response: " + processedMetrics.response + " domLoaded: " + processedMetrics.domLoaded + " domInteractive: " + processedMetrics.domInteractive + " pageLoad: " + processedMetrics.pageLoad + " fullTime: " + processedMetrics.fullTime);
+
   fs.writeFile(
-    `${dirName}/${report.lhr["fetchTime"].replace(/:/g, "_")}.json`,
-    report.report,
+    `${dirName}/timing-${processedMetrics.fetchTime.replace(/:/g, "_")}.json`,
+    JSON.stringify(processedMetrics),
+    err => {
+      if (err) throw err;
+    }
+  );
+}
+
+const saveIndividualLighthouseReport = (testPlan, processedMetrics, bulkMetrics) => {
+  const dirName = getDirname(testPlan.url);
+
+  console.log(processedMetrics.fetchTime + " -> FCP: " + processedMetrics.firstContentfulPaint + " FMP: " + processedMetrics.firstMeaningfulPaint + " LCP: " + processedMetrics.largestContentfulPaint
+  + " NRTT: " + processedMetrics.networkRTT + " TTI: " + processedMetrics.timeToInteractive + " SpeedIndex: " + processedMetrics.speedIndex + " PS: " + processedMetrics.performanceScore);
+
+  fs.writeFile(
+    `${dirName}/lighthouse-${processedMetrics.fetchTime.replace(/:/g, "_")}.json`,
+    bulkMetrics.report,
     err => {
       if (err) throw err;
     }
   );
 };
 
-const saveMedianLighthouseReport = (testPlan, reportArray) => {
-  const median = computeMedianRun(reportArray);
+const saveMedianLighthouseReport = (testPlan, lighthouseResultsArray, timmingResultsArray) => {
+  const lighthouseMedian = computeMedianRun(lighthouseResultsArray);
+  const timingMedian = computeMedianRunTiming(timmingResultsArray);
   const date = (new Date()).toLocaleString().replace(/:/g, "_").replace(/\//g, "_");
   
   const results = {};
-  results.processedResults = processLighthouseResults(median);
+  results.lighthouseMedianResults = testRunner.processLighthouseResults(lighthouseMedian);
+  results.timingMediaResults = timingMedian;
   results.date = date;
   results.testPlan = testPlan;
 
   const dirName = getDirname(testPlan.url);
   fs.writeFile(
-    `${dirName}/summary-${date}.json`,
+    `${dirName}/lighhouse-median-${date}.json`,
     JSON.stringify(results, null, ' '),
     err => {
       if (err) throw err;
     }
   );
-
+  console.log("Summary: " + JSON.stringify(results, null, ' '));
   return results;
 }
 
 exports.createReportFolders = createReportFolders;
-exports.processLighthouseResults = processLighthouseResults;
 exports.saveIndividualLighthouseReport = saveIndividualLighthouseReport;
+exports.saveIndividualTimingReport = saveIndividualTimingReport;
 exports.saveMedianLighthouseReport = saveMedianLighthouseReport;

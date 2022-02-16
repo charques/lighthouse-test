@@ -1,7 +1,7 @@
 {
   "url": "https://developer.ing.com",
   "iterations": 3,
-    "browserOptions": {
+  "browserOptions": {
     "headless": true, 
     "defaultViewport": null,
     "devtools": true,
