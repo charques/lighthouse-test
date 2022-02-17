@@ -1,0 +1,11 @@
+{
+  "url": "https://dev2.webtesting.nl",
+  "iterations": 3,
+  "browserOptions": {
+    "headless": true, 
+    "defaultViewport": null,
+    "devtools": true,
+    "args": ["--no-sandbox"]
+  },
+  "lighthouseConfigPreset": "lr-mobile"
+}
