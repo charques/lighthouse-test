@@ -39,7 +39,8 @@ const saveIndividualLighthouseReport = (testPlan, processedMetrics, bulkMetrics)
   const dirName = getDirname(testPlan.url);
 
   console.log(processedMetrics.fetchTime + " -> FCP: " + processedMetrics.firstContentfulPaint + " FMP: " + processedMetrics.firstMeaningfulPaint + " LCP: " + processedMetrics.largestContentfulPaint
-  + " NRTT: " + processedMetrics.networkRTT + " TTI: " + processedMetrics.timeToInteractive + " SpeedIndex: " + processedMetrics.speedIndex + " PS: " + processedMetrics.performanceScore);
+  + " NRTT: " + processedMetrics.networkRTT + " TTI: " + processedMetrics.timeToInteractive + " SpeedIndex: " + processedMetrics.speedIndex + " CLS: " + processedMetrics.cumulativeLayoutShift 
+  + " TBT: " + processedMetrics.totalBlockingTime + " PS: " + processedMetrics.performanceScore);
 
   fs.writeFile(
     `${dirName}/lighthouse-${processedMetrics.fetchTime.replace(/:/g, "_")}.json`,

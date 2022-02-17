@@ -56,6 +56,8 @@ const processLighthouseResults = (report) => {
     networkRTT: report.audits['network-rtt'].displayValue,
     timeToInteractive: report.audits['interactive'].displayValue,
     speedIndex: report.audits['speed-index'].displayValue,
+    totalBlockingTime: report.audits['total-blocking-time'].displayValue,
+    cumulativeLayoutShift: report.audits['cumulative-layout-shift'].displayValue,
     performanceScore: report.categories.performance.score * 100,
     fetchTime: report.fetchTime
   };
