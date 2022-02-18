@@ -9,7 +9,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "chrome-launcher": "^0.15.0",
     "lighthouse": "^9.3.1",
     "puppeteer": "^13.3.2",
     "yargs": "^17.3.1"
