@@ -1,26 +1,16 @@
 const puppeteer = require('puppeteer');
 const lighthouse = require('lighthouse');
-const {computeMedianRun} = require('lighthouse/lighthouse-core/lib/median-run.js');
+const {computeMedianRun} = require('lighthouse/lighthouse-core/lib/median-run');
 const lrDesktopConfig = require('lighthouse/lighthouse-core/config/lr-desktop-config');
 const lrMobileConfig = require('lighthouse/lighthouse-core/config/lr-mobile-config');
+const calcUtils = require('./calc-utils');
 
 const computeMedianRunLighthouse = (lighthouseResults) => {
   return processLighthouseResults(computeMedianRun(lighthouseResults))
 }
 
 const computeMedianRunTiming = (timingResults) => {
-  const median = (values) => {
-    values.sort(function(a,b){
-      return a-b;
-    });
-    var half = Math.floor(values.length / 2);
-    
-    if (values.length % 2)
-      return values[half];
-    else
-      return (values[half - 1] + values[half]) / 2.0;
-  }
-
+  
   const getValuesByKey = (resultsArray, key) => {
     const values = [];
     for (var i = 0; i < resultsArray.length; i++) {
@@ -30,26 +20,20 @@ const computeMedianRunTiming = (timingResults) => {
   }
 
   return {
-    dnsLookup: median(getValuesByKey(timingResults, 'dnsLookup')),
-    tcpConnect: median(getValuesByKey(timingResults, 'tcpConnect')),
-    request: median(getValuesByKey(timingResults, 'request')),
-    response: median(getValuesByKey(timingResults, 'response')),
-    domLoaded: median(getValuesByKey(timingResults, 'domLoaded')),
-    domInteractive: median(getValuesByKey(timingResults, 'domInteractive')),
-    pageLoad: median(getValuesByKey(timingResults, 'pageLoad')),
-    fullTime: median(getValuesByKey(timingResults, 'fullTime'))
+    dnsLookup: calcUtils.median(getValuesByKey(timingResults, 'dnsLookup')),
+    tcpConnect: calcUtils.median(getValuesByKey(timingResults, 'tcpConnect')),
+    request: calcUtils.median(getValuesByKey(timingResults, 'request')),
+    response: calcUtils.median(getValuesByKey(timingResults, 'response')),
+    domLoaded: calcUtils.median(getValuesByKey(timingResults, 'domLoaded')),
+    domInteractive: calcUtils.median(getValuesByKey(timingResults, 'domInteractive')),
+    pageLoad: calcUtils.median(getValuesByKey(timingResults, 'pageLoad')),
+    fullTime: calcUtils.median(getValuesByKey(timingResults, 'fullTime'))
   }
 }
 
 const processLighthouseResults = (report) => {
-  let resourceSize = {};
-  report.audits['resource-summary'].details.items
-    .filter(({ transferSize }) => transferSize > 0)
-    .forEach(({ resourceType, transferSize }) => {
-      resourceSize[resourceType] = transferSize;
-    })
   return {
-    resourceSize: resourceSize,
+    resourceSize: calculateResourceSummary(report.audits['resource-summary'].details.items),
     firstContentfulPaint: report.audits['first-contentful-paint'].displayValue,
     firstMeaningfulPaint: report.audits['first-meaningful-paint'].displayValue,
     largestContentfulPaint: report.audits['largest-contentful-paint'].displayValue,
@@ -58,10 +42,38 @@ const processLighthouseResults = (report) => {
     speedIndex: report.audits['speed-index'].displayValue,
     totalBlockingTime: report.audits['total-blocking-time'].displayValue,
     cumulativeLayoutShift: report.audits['cumulative-layout-shift'].displayValue,
+    networkServerLatency: report.audits['network-server-latency'].displayValue,
+    serverResponseTime: report.audits['server-response-time'].displayValue,
+    totalByteWeight: report.audits['total-byte-weight'].displayValue,
+    resourceSummary: report.audits['resource-summary'].displayValue,
     performanceScore: report.categories.performance.score * 100,
+    requestsTimings: calculateTimingPerAssetType(report.audits['network-requests'].details.items),
     fetchTime: report.fetchTime
   };
 };
+
+const calculateResourceSummary = (resources) => {
+  let resourceSize = {};
+  resources.filter(({ transferSize }) => transferSize > 0)
+    .forEach(({ resourceType, transferSize }) => {
+      resourceSize[resourceType] = transferSize;
+    })
+  return resourceSize;
+}
+
+const calculateTimingPerAssetType = (requests, fMimeType) => {
+  let tranferTimeA = [];
+  let filtered = (fMimeType) ? requests.filter(({ mimeType }) => mimeType == fMimeType) : requests;
+  filtered.forEach(({ startTime, endTime }) => {
+    tranferTimeA.push(endTime - startTime);
+  })
+  return {
+    transferTimeMedian: calcUtils.median(tranferTimeA),
+    transferTimeAverage: calcUtils.average(tranferTimeA),
+    transferTimeMin: calcUtils.min(tranferTimeA),
+    transferTimeMax: calcUtils.max(tranferTimeA),
+  };
+}
 
 const processTimingResults = (timingMetrics) => {
   return {
@@ -130,3 +142,4 @@ async function gatherPerformanceTimingMetrics(page) {
 exports.gatherPerfMetrics = gatherPerfMetrics;
 exports.computeMedianRunTiming = computeMedianRunTiming;
 exports.computeMedianRunLighthouse = computeMedianRunLighthouse;
+exports.processLighthouseResults = processLighthouseResults;
