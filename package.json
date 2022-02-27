@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start-test-plan": "node index.js --testPlan=tp-google-com.json",
-    "start-analyser": "node index-analyser.js --testResultsDir=reports/developer.ing.com/ --fileNameFilter=lighthouse-2022-02-17 --formFactor=desktop"
+    "start-analyser": "node index-analyser.js --testResultsDir=reports/google.com/ --fileNameFilter=lighthouse-2022-02-22 --formFactor=desktop"
   },
   "author": "",
   "license": "ISC",

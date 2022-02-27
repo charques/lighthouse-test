@@ -1,5 +1,8 @@
 # lighthouse-test
 
+# Prerequisites
+- Node JS
+
 # Install
 - npm install
 
