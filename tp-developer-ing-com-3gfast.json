@@ -1,5 +1,5 @@
 {
-  "url": "https://dev1.webtesting.nl",
+  "url": "https://developer.ing.com",
   "iterations": 3,
   "browserOptions": {
     "headless": true, 
@@ -7,5 +7,6 @@
     "devtools": true,
     "args": ["--no-sandbox"]
   },
-  "lighthouseConfigPreset": "lr-mobile"
+  "lighthouseConfigPreset": "lr-desktop",
+  "throttle": "3gfast"
 }

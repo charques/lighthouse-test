@@ -1,0 +1,12 @@
+{
+  "url": "https://dev1.webtesting.nl",
+  "iterations": 3,
+  "browserOptions": {
+    "headless": true, 
+    "defaultViewport": null,
+    "devtools": true,
+    "args": ["--no-sandbox"]
+  },
+  "lighthouseConfigPreset": "lr-desktop",
+  "throttle": "4g"
+}

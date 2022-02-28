@@ -1,6 +1,6 @@
 const fs = require('fs');
 const yargs = require('yargs/yargs');
-const testRunner = require('./test-runner');
+const testRunner = require('./src/test-runner');
 
 let args = process.argv.slice(2);
 var argvs = yargs(args)

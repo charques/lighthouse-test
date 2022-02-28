@@ -1,0 +1,12 @@
+{
+  "url": "https://www.google.com",
+  "iterations": 3,
+  "browserOptions": {
+    "headless": true, 
+    "defaultViewport": null,
+    "devtools": true,
+    "args": ["--no-sandbox"]
+  },
+  "lighthouseConfigPreset": "lr-desktop",
+  "throttle": "4g"
+}

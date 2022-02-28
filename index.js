@@ -1,7 +1,7 @@
 const fs = require('fs');
 const yargs = require('yargs/yargs');
-const testRunner = require('./test-runner');
-const reportUtils = require('./report-util');
+const testRunner = require('./src/test-runner');
+const reportUtils = require('./src/report-util');
 
 let args = process.argv.slice(2);
 var argvs = yargs(args)
@@ -23,7 +23,8 @@ reportUtils.createReportFolders(testPlanObj.url);
     let perfMetricsResult = await testRunner.gatherPerfMetrics(
       testPlanObj.url, 
       testPlanObj.browserOptions, 
-      testPlanObj.lighthouseConfigPreset);
+      testPlanObj.lighthouseConfigPreset,
+      testPlanObj.throttle);
     
     lighthouseIndividualResults.push(perfMetricsResult.lighthouseMetricsBulk.lhr);
     timingIndividualResults.push(perfMetricsResult.timingMetricsProcessed);
