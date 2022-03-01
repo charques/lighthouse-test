@@ -47,7 +47,7 @@ const processLighthouseResults = (report) => {
     totalByteWeight: report.audits['total-byte-weight'].displayValue,
     resourceSummary: report.audits['resource-summary'].displayValue,
     performanceScore: report.categories.performance.score * 100,
-    requestsTimings: calculateTimingPerAssetType(report.audits['network-requests'].details.items),
+    requestsTimings: calculateTimingPerAssetType(report.audits['network-requests'].details),
     fetchTime: report.fetchTime
   };
 };
@@ -63,18 +63,21 @@ const calculateResourceSummary = (resources) => {
   return resourceSize;
 }
 
-const calculateTimingPerAssetType = (requests, fMimeType) => {
-  let tranferTimeA = [];
-  let filtered = (fMimeType) ? requests.filter(({ mimeType }) => mimeType == fMimeType) : requests;
-  filtered.forEach(({ startTime, endTime }) => {
-    tranferTimeA.push(endTime - startTime);
-  })
-  return {
-    transferTimeMedian: calcUtils.median(tranferTimeA),
-    transferTimeAverage: calcUtils.average(tranferTimeA),
-    transferTimeMin: calcUtils.min(tranferTimeA),
-    transferTimeMax: calcUtils.max(tranferTimeA),
-  };
+const calculateTimingPerAssetType = (networkRequest, fMimeType) => {
+  let timings = {};
+  if(networkRequest && networkRequest.items) {
+    let requests = networkRequest.items;
+    let tranferTimeA = [];    
+    let filtered = (fMimeType) ? requests.filter(({ mimeType }) => mimeType == fMimeType) : requests;
+    filtered.forEach(({ startTime, endTime }) => {
+      tranferTimeA.push(endTime - startTime);
+    })
+    timings['transferTimeMedian'] = calcUtils.median(tranferTimeA);
+    timings['transferTimeAverage'] = calcUtils.average(tranferTimeA);
+    timings['transferTimeMin'] = calcUtils.min(tranferTimeA);
+    timings['transferTimeMax'] = calcUtils.max(tranferTimeA);
+  }
+  return timings;
 }
 
 const processTimingResults = (timingMetrics) => {
