@@ -1,6 +1,6 @@
 {
   "url": "https://dev1.webtesting.nl",
-  "iterations": 3,
+  "iterations": 5,
   "browserOptions": {
     "headless": true, 
     "defaultViewport": null,
