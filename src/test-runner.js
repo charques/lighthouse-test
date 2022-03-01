@@ -37,10 +37,10 @@ const processLighthouseResults = (report) => {
     firstContentfulPaint: report.audits['first-contentful-paint'].displayValue,
     firstMeaningfulPaint: report.audits['first-meaningful-paint'].displayValue,
     largestContentfulPaint: report.audits['largest-contentful-paint'].displayValue,
-    networkRTT: report.audits['network-rtt'].displayValue,
     timeToInteractive: report.audits['interactive'].displayValue,
-    speedIndex: report.audits['speed-index'].displayValue,
     totalBlockingTime: report.audits['total-blocking-time'].displayValue,
+    speedIndex: report.audits['speed-index'].displayValue,
+    networkRTT: report.audits['network-rtt'].displayValue,
     cumulativeLayoutShift: report.audits['cumulative-layout-shift'].displayValue,
     networkServerLatency: report.audits['network-server-latency'].displayValue,
     serverResponseTime: report.audits['server-response-time'].displayValue,
@@ -48,6 +48,7 @@ const processLighthouseResults = (report) => {
     resourceSummary: report.audits['resource-summary'].displayValue,
     performanceScore: report.categories.performance.score * 100,
     requestsTimings: calculateTimingPerAssetType(report.audits['network-requests'].details),
+    pageVitals: getPageVitals(report.audits['diagnostics'].details),
     fetchTime: report.fetchTime
   };
 };
@@ -61,6 +62,14 @@ const calculateResourceSummary = (resources) => {
       })
   }
   return resourceSize;
+}
+
+const getPageVitals = (details) => {
+  let pageVitals = {};
+  if(details && details.items && details.items.length > 0) {
+    pageVitals = details.items[0];
+  }
+  return pageVitals;
 }
 
 const calculateTimingPerAssetType = (networkRequest, fMimeType) => {
